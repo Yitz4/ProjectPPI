@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>JSON Data Table</title>
+</head>
+<body>
+<h2>Registered Campers</h2>
+
+<div class="mb-3 mt-3">
+    <label for="camperPhone" class="form-label">Enter finding camper phone:</label>
+    <input type="number" class="form-control" id="camperPhone" placeholder="Enter phone" name="camperPhone">
+    <button class="btn btn-primary" onclick="findCamper()">search by phone</button>
+    <button class="btn" onclick="fetchDataAndPopulateTable(url)">clear filter</button>
+</div>
+
+
+<table id="dataTable" class="table table-dark">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>District</th>
+        <th>Phone</th>
+        <th>Age</th>
+        <th>Options</th>
+    </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+</table>
+
+<script>
+
+    function findCamper() {
+        let findingCamperPhone  = document.getElementById("camperPhone").value;
+        const findingCamperURL = "http://localhost:8080/campers/findCamperByPhone/"+findingCamperPhone;
+        fetchDataAndPopulateTable(findingCamperURL);
+
+    }
+    // Function to fetch JSON data from URL and populate table
+    async function fetchDataAndPopulateTable(url) {
+        try {
+            const response = await fetch(url);
+            const campers = await response.json();
+
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = ''; // Clear existing table data
+
+            try{
+                campers.forEach(currentCamper => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td>${currentCamper.id}</td>
+                    <td>${currentCamper.name}</td>
+                    <td>${currentCamper.email}</td>
+                    <td>${currentCamper.district}</td>
+                    <td>${currentCamper.phone}</td>
+                    <td>${currentCamper.age}</td>
+                    <td><button type="button" id="${currentCamper.id}" onclick="deleteCamperButton(id)" class="btn btn-danger">Delete</button></td>
+                    <td><button type="button" onclick="editCamperButton(${currentCamper.id})" class="btn btn-warning">Edit</button></td>
+                `;
+                    row.setAttribute("id",currentCamper.id);
+
+                    tableBody.appendChild(row);
+                });
+            }catch (e){
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${campers.id}</td>
+                    <td>${campers.name}</td>
+                    <td>${campers.email}</td>
+                    <td>${campers.district}</td>
+                    <td>${campers.phone}</td>
+                    <td>${campers.age}</td>
+                    <td><button type="button" id="${campers.id}" onclick="deleteCamperButton(id)" class="btn btn-danger">Delete</button></td>
+                    <td><button type="button" onclick="editCamperButton(${campers.id})" class="btn btn-warning">Edit</button></td>
+                `;
+                row.setAttribute("id",campers.id);
+                tableBody.appendChild(row);
+            }
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
+
+    // URL from where to fetch JSON data
+    const url = "http://localhost:8080/campers"; // Replace with your JSON URL
+
+    // Call the function to fetch data and populate table
+    fetchDataAndPopulateTable(url);
+
+
+    function deleteCamper(id) {
+        //cuando ya estemos seguros de que se quiere eliminar.
+        const deleteUrl = "http://localhost:8080/campers/delete-camper-by-id?id="+id;
+
+        fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response;
+            })
+            .then(data => {
+                console.log('Item deleted successfully:', data);
+                fetchDataAndPopulateTable(url);
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                // Handle errors, show an error message, or retry the operation
+            });
+    }
+
+    function deleteCamperButton(id) {
+
+        if(confirm("Estas seguro de querer eliminar al campero con el id="+id)){
+            deleteCamper(id);
+        }else{
+            console.log("No se hicieron cambios en el campero")
+        }
+    }
+
+    function editCamperButton(id){
+        // cambiar las propiedades de la fila para poder editar
+        let currentRow = document.getElementById(id);
+
+        let nameCell = currentRow.children.item(1);
+        let emailCell = currentRow.children.item(2);
+        let districtCell = currentRow.children.item(3);
+        let phoneCell = currentRow.children.item(4);
+        let ageCell = currentRow.children.item(5);
+
+        nameCell.setAttribute("contenteditable","true");
+        emailCell.setAttribute("contenteditable","true");
+        districtCell.setAttribute("contenteditable","true");
+        phoneCell.setAttribute("contenteditable","true");
+        ageCell.setAttribute("contenteditable","true");
+
+        currentRow.children.item(1).focus();
+
+
+        //cambiar el texto del botón editar y cambiar el color
+        let editButton = currentRow.children.item(7).children.item(0);
+        editButton.setAttribute("class","btn btn-success");
+        editButton.innerHTML = "Save";
+        // cuando el usuario presione nuevamente el botón de guardar, debemos de ir a la función guardar
+        editButton.setAttribute("onClick","saveCamper("+id+")");
+    }
+
+    function saveCamper(id) {
+        let currentRow = document.getElementById(id);
+
+        let nameCell = currentRow.children.item(1);
+        let emailCell = currentRow.children.item(2);
+        let districtCell = currentRow.children.item(3);
+        let phoneCell = currentRow.children.item(4);
+        let ageCell = currentRow.children.item(5);
+
+        const editCamper = {
+            id : id,
+            name : nameCell.innerHTML,
+            email : emailCell.innerHTML,
+            district : districtCell.innerHTML,
+            phone : phoneCell.innerHTML,
+            age : ageCell.innerHTML
+        }
+
+        if (!validateName(nameCell) || !validateEmail(emailCell) || !validateDistrict(districtCell) || !validatePhone(phoneCell) || !validateAge(ageCell)) {
+            alert("Por favor, complete todos los campos correctamente.");
+            return;
+        }
+
+        const updateUrl = "http://localhost:8080/campers";
+
+        const requestOptions = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(editCamper)
+        };
+
+        fetch(updateUrl, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+                fetchDataAndPopulateTable(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+    }
+
+    function validateName(cell) {
+        var letters = /^[A-Za-z]+$/;
+        return !!cell.innerHTML.match(letters);
+    }
+
+    function validateEmail(cell) {
+        const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+        return regex.test(cell.innerHTML);
+    }
+
+    function validateDistrict(cell) {
+        var letters = /^[A-Za-z]+$/;
+        return !!cell.innerHTML.match(letters);
+    }
+
+    function validatePhone(cell) {
+        const numbers = /^[0-9]+$/;
+        return !!cell.innerHTML.match(numbers);
+    }
+
+    function validateAge(cell) {
+        const ageValue = parseInt(cell.innerHTML);
+        return !isNaN(ageValue) && ageValue >= 0 && ageValue <= 100;
+    }
+
+</script>
+</body>
+</html>

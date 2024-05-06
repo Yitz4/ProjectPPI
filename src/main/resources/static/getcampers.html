@@ -38,7 +38,7 @@
 
     function findCamper() {
         let findingCamperPhone  = document.getElementById("camperPhone").value;
-        const findingCamperURL = "http://localhost:8080/campers/findCamperByPhone/"+findingCamperPhone;
+        const findingCamperURL = "http://camp-env.eba-979j6cev.us-east-2.elasticbeanstalk.com/campers/findCamperByPhone/"+findingCamperPhone;
         fetchDataAndPopulateTable(findingCamperURL);
 
     }
@@ -90,7 +90,7 @@
     }
 
     // URL from where to fetch JSON data
-    const url = "http://localhost:8080/campers"; // Replace with your JSON URL
+    const url = "http://camp-env.eba-979j6cev.us-east-2.elasticbeanstalk.com/campers"; // Replace with your JSON URL
 
     // Call the function to fetch data and populate table
     fetchDataAndPopulateTable(url);
@@ -98,7 +98,7 @@
 
     function deleteCamper(id) {
         //cuando ya estemos seguros de que se quiere eliminar.
-        const deleteUrl = "http://localhost:8080/campers/delete-camper-by-id?id="+id;
+        const deleteUrl = "http://camp-env.eba-979j6cev.us-east-2.elasticbeanstalk.com/campers/delete-camper-by-id?id="+id;
 
         fetch(deleteUrl, {
             method: 'DELETE',
@@ -181,7 +181,7 @@
             return;
         }
 
-        const updateUrl = "http://localhost:8080/campers";
+        const updateUrl = "http://camp-env.eba-979j6cev.us-east-2.elasticbeanstalk.com/campers";
 
         const requestOptions = {
             method: 'PUT',
